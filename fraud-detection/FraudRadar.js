@@ -1,26 +1,67 @@
 const fs = require('fs')
 
-function Check (filePath) {
-  // READ FRAUD LINES
-  let orders = []
-  let fraudResults = []
+// I used the relatively recent additions of classes in Javascript to do the refactor. It's possible to use functions in the same way.
 
-  let fileContent = fs.readFileSync(filePath, 'utf8')
-  let lines = fileContent.split('\n')
-  for (let line of lines) {
-    let items = line.split(',')
-    let order = {
-      orderId: Number(items[0]),
-      dealId: Number(items[1]),
-      email: items[2].toLowerCase(),
-      street: items[3].toLowerCase(),
-      city: items[4].toLowerCase(),
-      state: items[5].toLowerCase(),
-      zipCode: items[6],
-      creditCard: items[7]
-    }
-    orders.push(order)
+class Checker{
+  orders = []
+  fraudResults = []
+  fileContent = fs.readFileSync(filePath, 'utf8')
+  lines = fileContent.split('\n')
+  normalizer = new Normalizer()
+
+  constructor(filePath){
+    this.filePath = filePath
   }
+
+  Check (filePath) {
+    // READ FRAUD LINES
+    let orders = []
+    let fraudResults = []
+  
+    let fileContent = fs.readFileSync(filePath, 'utf8')
+    let lines = fileContent.split('\n')
+    for (let line of lines) {
+      let items = line.split(',')
+      let order = {
+        orderId: Number(items[0]),
+        dealId: Number(items[1]),
+        email: items[2].toLowerCase(),
+        street: items[3].toLowerCase(),
+        city: items[4].toLowerCase(),
+        state: items[5].toLowerCase(),
+        zipCode: items[6],
+        creditCard: items[7]
+      }
+      orders.push(order)
+    }
+  }
+}
+
+
+// Class normalizer to normalize every order. Could make it static (the methods), but I prefer to instanciate it.
+class Normalizer{
+  constructor(){
+
+  }
+
+  normalize(order){
+
+  }
+
+  normalize_email(email){
+
+  }
+
+  normalize_street(street){
+
+  }
+
+  normalize_state(state){
+
+  }
+}
+
+function Normalize()
 
   // NORMALIZE
   for (let order of orders) {
