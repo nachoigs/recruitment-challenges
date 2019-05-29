@@ -2,22 +2,30 @@ const fs = require('fs')
 
 // I used the relatively recent additions of classes in Javascript to do the refactor. It's possible to use functions in the same way.
 
-class Checker{
-  orders = []
-  fraudResults = []
-  fileContent = fs.readFileSync(filePath, 'utf8')
-  lines = fileContent.split('\n')
-  normalizer = new Normalizer()
+// Class that checks a file with possible fraudulent orders and return an array with the fraudulent orderIds.
+class Checker {
 
-  constructor(filePath){
-    this.filePath = filePath
+  constructor() {
+    this.normalizer = new Normalizer()
+    this.checker = new FraudChecker()
   }
 
-  Check (filePath) {
+  // Method that checks if a file with orders have fraudulent orders.
+  check(filePath) {
     // READ FRAUD LINES
-    let orders = []
+    let orders = this.getOrders(filePath)
+    let ordersnormalized = []
     let fraudResults = []
-  
+    for (let order of orders) {
+      ordersnormalized.push(this.normalizer.normalize(order))
+    }
+    return this.checker.checkFraud(ordersnormalized)
+  }
+
+  // Get the orders from a file and store and return an array with them
+  getOrders(filePath) {
+    let orders = []
+
     let fileContent = fs.readFileSync(filePath, 'utf8')
     let lines = fileContent.split('\n')
     for (let line of lines) {
@@ -34,82 +42,80 @@ class Checker{
       }
       orders.push(order)
     }
+    return orders
   }
 }
 
 
-// Class normalizer to normalize every order. Could make it static (the methods), but I prefer to instanciate it.
-class Normalizer{
-  constructor(){
+// Class to normalize every order. Could make it static (the methods), but I prefer to instanciate it.
+class Normalizer {
+  constructor() {}
 
+  normalize(order) {
+    order.email = this.normalizeEmail(order.email)
+    order.street = this.normalizeStreet(order.street)
+    order.state = this.normalizeState(order.state)
+
+    return order;
   }
 
-  normalize(order){
-
-  }
-
-  normalize_email(email){
-
-  }
-
-  normalize_street(street){
-
-  }
-
-  normalize_state(state){
-
-  }
-}
-
-function Normalize()
-
-  // NORMALIZE
-  for (let order of orders) {
-    // Normalize email
-    let aux = order.email.split('@')
+  normalizeEmail(email) {
+    let aux = email.split('@')
     let atIndex = aux[0].indexOf('+')
     aux[0] = atIndex < 0 ? aux[0].replace('.', '') : aux[0].replace('.', '').substring(0, atIndex - 1)
-    order.email = aux.join('@')
-
-    // Normalize street
-    order.street = order.street.replace('st.', 'street').replace('rd.', 'road')
-
-    // Normalize state
-    order.state = order.street.replace('il', 'illinois').replace('ca', 'california').replace('ny', 'new york')
+    return aux.join('@')
   }
 
-  // CHECK FRAUD
-  for (let i = 0; i < orders.length; i++) {
-    let current = orders[i]
-    let isFraudulent = false
-
-    for (let j = i + 1; j < orders.length; j++) {
-      isFraudulent = false
-      if (current.dealId === orders[j].dealId
-        && current.email === orders[j].email
-        && current.creditCard !== orders[j].creditCard) {
-          isFraudulent = true
-        }
-      
-      if (current.dealId === orders[j].dealId
-        && current.state === orders[j].state
-        && current.zipCode === orders[j].zipCode
-        && current.street === orders[j].street
-        && current.city === orders[j].city
-        && current.creditCard !== orders[j].creditCard) {
-          isFraudulent = true
-        }
-      
-      if (isFraudulent) {
-        fraudResults.push({
-          isFraudulent: true,
-          orderId: orders[j].orderId
-        })
-      }
-    }
+  normalizeStreet(street) {
+    return street.replace('st.', 'street').replace('rd.', 'road')
   }
-
-  return fraudResults
+  // There was a typo here in the original file (order.street, should be order.state)
+  normalizeState(state) {
+    return state.replace('il', 'illinois').replace('ca', 'california').replace('ny', 'new york')
+  }
 }
 
-module.exports = { Check }
+// Class to check a possible fraud in some orders and return the fraudulent order
+class FraudChecker {
+  constructor() {}
+
+  checkFraud(orders) {
+    let fraudResults = []
+    for (let i = 0; i < orders.length; i++) {
+      for (let j = i + 1; j < orders.length; j++) {
+        if (this.compareFraud(orders[i], orders[j])) {
+          fraudResults.push({
+            isFraudulent: true,
+            orderId: orders[j].orderId
+          })
+        }
+      }
+    }
+    return fraudResults
+  }
+
+
+  // Compare two orders and say if it's fraudulent (true in boolean)
+  compareFraud(firstorder, secondorder) {
+
+    if (firstorder.dealId === secondorder.dealId
+      && firstorder.email === secondorder.email
+      && firstorder.creditCard !== secondorder.creditCard) {
+      return true
+    }
+
+    if (firstorder.dealId === secondorder.dealId
+      && firstorder.state === secondorder.state
+      && firstorder.zipCode === secondorder.zipCode
+      && firstorder.street === secondorder.street
+      && firstorder.city === secondorder.city
+      && firstorder.creditCard !== secondorder.creditCard) {
+      return true
+    }
+    return false
+  }
+
+}
+
+module.exports.Checker = Checker
+
